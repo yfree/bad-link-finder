@@ -22,10 +22,10 @@ positional arguments:
   url: The root url to crawl.  
 
 optional arguments:
-*  -h, --help            show this help message and exit  
-*  -d, --debug           Shows every url as it is checked.  
-*  -f, --fake-header     Use a fake User Agent header.  
-*  -i  [ ...], --ignore  Ignore paths from being crawled. If these paths are found in the url, they will be ignored.  
+*  -h, --help
+*  -d, --debug:           Shows every url as it is checked.  
+*  -f, --fake-header:     Use a fake User Agent header.  
+*  -i  [ ...], --ignore:  Ignore paths from being crawled. If these paths are found in the url, they will be ignored.  
 
 ##Tip
 If you are having problems with a site, the ignore option may help you limit the scope of your web crawling.
