@@ -15,8 +15,8 @@ class ErrorCrawler(WebCrawler):
          
         self.output_result(page['code'], page['href'], page['url'], page['referer'])
         
-    #output if one of the links on the page has already been identified as bad/connection error
-    #but not if it's on a page that we're not allowed to check)
+    #output if one of the links on the page has already been identified as bad/connection error,
+    #but only on pages that we're allowed to check
     def execute_link_job(self, page, link, link_url):
         if self.allowed_to_check(page, link_url):
             if link_url in self.bad_urls:
