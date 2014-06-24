@@ -27,7 +27,6 @@ def parse_args():
         metavar='',
         help="""Ignore paths from being crawled.
         If these paths are found in the url, they will be ignored.""")
-
     return arg_parser.parse_args()
 
 def main():

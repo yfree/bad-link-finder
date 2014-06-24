@@ -18,7 +18,7 @@ class WebCrawler(object):
         self.allowed_content_types = ('text/html', 'application/xhtml+xml')
         self.encoding = sys.stdout.encoding or 'utf-8'
 
-    #if the netlocs are different, the link_url prevails
+    #if the netlocs are different, the link url prevails
     def build_url(self, base_url, link):
         return self.strip_anchor(urljoin(base_url, link))
 
@@ -40,7 +40,6 @@ class WebCrawler(object):
                 netlocs.append(netloc[4:])
             else:
                 netlocs.append(netloc)
-
         return all(netloc == netlocs[0] for netloc in netlocs)
     
     def http_link(self, link):
@@ -49,9 +48,8 @@ class WebCrawler(object):
         except (Exception, ValueError):
             return False
                 
-        if  scheme and scheme not in self.allowed_schemes:
+        if scheme and scheme not in self.allowed_schemes:
             return False
-        
         return True
     
     def extract_links(self, html):
@@ -66,9 +64,7 @@ class WebCrawler(object):
             for link in dom.xpath('//a/@href | //area/@href'):
                 if not self.http_link(link):
                     continue
-         
                 links.append(link)
-
         return links
 
     def strip_anchor(self, url):
@@ -104,7 +100,6 @@ class WebCrawler(object):
             page['code'] = 0
     
         page['links'] = self.extract_links(page.get('content', ''))
-        
         return page
 
     def execute_page_job(self, page):
