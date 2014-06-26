@@ -16,7 +16,7 @@ class WebCrawler(object):
         self.identified_urls = set()
         self.allowed_schemes = ('http', 'https')
         self.allowed_content_types = ('text/html', 'application/xhtml+xml')
-        self.encoding = sys.stdout.encoding or 'utf-8'
+        self.encoding = 'utf-8'
 
     #if the netlocs are different, the link url prevails
     def build_url(self, base_url, link):
@@ -56,7 +56,7 @@ class WebCrawler(object):
         links = []
 
         try:
-            myparser = etree.HTMLParser(encoding="utf-8")
+            myparser = etree.HTMLParser(encoding=self.encoding)
             dom = etree.HTML(html, parser=myparser)
         except (TypeError, etree.ParserError, etree.XMLSyntaxError):
             return links
