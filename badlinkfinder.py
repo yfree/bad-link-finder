@@ -41,7 +41,7 @@ def main():
     else:
         url = args.url
 
-    target = {'url':url, 'href':'', 'referer':url}
+    target = {'url':url, 'href':'', 'referer':url, 'depth':0}
 
     crawler.crawl(target)
 

@@ -18,22 +18,28 @@ class WebCrawler(object):
         self.allowed_content_types = ('text/html', 'application/xhtml+xml')
         self.encoding = 'utf-8'
 
-    #if the netlocs are different, the link url prevails
+    # build url from base url and link with the anchor stripped
+    # if the netlocs are different, the link url prevails
     def build_url(self, base_url, link):
         return self.strip_anchor(urljoin(base_url, link))
+    
+    # removes all characters after a name anchor from url
+    def strip_anchor(self, url):
+        return url.split('#', 1)[0]
 
-    #checks if content type is html or xhtml
-    #returns true if valid content type strings are in the content type
+    # checks if content type is html or xhtml
+    # returns true if valid content type strings are in the content type
     def html_content_type(self, content_type):
         if not content_type:
             return False
         return any(allowed_type in content_type.lower() for allowed_type in self.allowed_content_types)
 
-    #check if args have the same netloc, args are urls
-    #'www' prefix is stripped and not compared
-    #returns true if netlocs match
+    # check if args have the same netloc, args are urls
+    # 'www' prefix is stripped and not compared
+    # returns true if netlocs match
     def same_netloc(self, *args):
         netlocs = []
+
         for url in args:
             netloc = urlparse(url).netloc
             if netloc.lower().startswith('www.'):
@@ -42,16 +48,36 @@ class WebCrawler(object):
                 netlocs.append(netloc)
         return all(netloc == netlocs[0] for netloc in netlocs)
     
+    # checks if a link is an http link
+    # returns false if the link has a non-http/https scheme or if the link is empty
     def http_link(self, link):
-        try:
-            scheme = urlparse(link.lower()).scheme
-        except (Exception, ValueError):
+        scheme = urlparse(link.lower()).scheme
+
+        if (scheme and scheme not in self.allowed_schemes) or not link:
             return False
-                
-        if scheme and scheme not in self.allowed_schemes:
-            return False
+        
         return True
+
+    # checks if a url contains a string in the ignore list
+    def ignored_path(self, url):
+        return any(ignore_path in url for ignore_path in self.config['ignore'])
     
+    # print page url and links
+    def execute_page_job(self, page):
+        print "\nPage {}".format(page['url'].encode(self.encoding))
+        for link in page['links']:
+            print "==> {}".format(link.encode(self.encoding))
+            
+    # intentionally empty
+    def execute_link_job(self, page, link, link_url):
+        return
+    
+    # link must have the same netloc as parent in base WebCrawler class
+    def allowed_to_check(self, page, link_url):
+        return self.same_netloc(page['url'], link_url)
+
+    # returns a list of links from html
+    # returns an empty list upon failure
     def extract_links(self, html):
         links = []
 
@@ -67,12 +93,10 @@ class WebCrawler(object):
                 links.append(link)
         return links
 
-    def strip_anchor(self, url):
-        return url.split('#', 1)[0]
-    
     def request_page(self, target):
         page = {'href' : target['href'], 
-            'referer' : target['referer']}
+            'referer' : target['referer'],
+            'depth': target['depth']}
         fake_agent = 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)'
         real_agent = 'Bad Link Finder'
         if self.config['fake_header'] == True:
@@ -89,11 +113,12 @@ class WebCrawler(object):
                 verify=False)
             page['url'] = response.url
             page ['code'] = response.status_code
-    
+
+            # do not retrieve content if page is not html/xhtml
             if not self.html_content_type(response.headers['Content-Type']):
                 response.close
-            
-            page['content'] = response.content
+            else:
+                page['content'] = response.content
     
         except (requests.RequestException, LocationParseError, socket.timeout, socket.error):
             page['url'] = target['url']
@@ -102,28 +127,14 @@ class WebCrawler(object):
         page['links'] = self.extract_links(page.get('content', ''))
         return page
 
-    def execute_page_job(self, page):
-        print "\nPage {}".format(page['url'].encode(self.encoding))
-        for link in page['links']:
-            print "==> {}".format(link.encode(self.encoding))
-
-    #intentionally empty
-    def execute_link_job(self, page, link, link_url):
-        return
-    
-    def ignored_path(self, url):
-        return any(ignore_path in url for ignore_path in self.config['ignore'])
-    
-    #link must have the same netloc as parent
-    def allowed_to_check(self, page, link_url):
-        return self.same_netloc(page['url'], link_url)
-
     def crawl(self, target):
         urls_to_crawl = set()
         page = self.request_page(target)
-        #handle redirection
-        self.identified_urls.add(page['url'])
 
+        # handle redirection
+        self.identified_urls.add(page['url'])
+        
+        # build a list of newly identified links to crawl and add entries to identified urls
         for link in page['links']:
             link_url = self.build_url(page['url'], link)
             if link_url not in self.identified_urls and\
@@ -134,6 +145,7 @@ class WebCrawler(object):
                 
         self.execute_page_job(page)
         
+        # recursively crawl links on page that are newly identified
         for link in page['links']:
             link_url = self.build_url(page['url'], link)
             
@@ -142,8 +154,10 @@ class WebCrawler(object):
             if link_url in urls_to_crawl:
                 next_target = {'url':link_url,
                     'href':link, 
-                    'referer':page['url']}
+                    'referer':page['url'],
+                    'depth':page['depth'] + 1}
                 urls_to_crawl.remove(link_url)
+
                 try:
                     self.crawl(next_target)
                 except RuntimeError as e:
