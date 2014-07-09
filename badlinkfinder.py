@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 import argparse
 from urlparse import urlparse
 from webcrawler.errorcrawler import ErrorCrawler
@@ -46,5 +45,4 @@ def main():
     crawler.crawl(target)
 
 if __name__ == "__main__":
-    rc = main()
-    sys.exit(rc)
+    main()

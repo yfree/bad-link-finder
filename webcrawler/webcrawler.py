@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import socket
 import requests
 from lxml import etree
@@ -162,4 +161,4 @@ class WebCrawler(object):
                     self.crawl(next_target)
                 except RuntimeError as e:
                     print "{}, exiting...".format(e)
-                    raise SystemExit
+                    exit(1)
